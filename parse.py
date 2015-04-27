@@ -1,13 +1,14 @@
 import csv
 from peewee import *
 from threading import Thread
+import MySQLdb
 
 mysql_db = MySQLDatabase(None)
 
 
 class Parser(Thread):
 
-    def __init__(self, filename, host, user, password, db, port, queue):
+    def __init__(self, filename, host, user, password, db, port, eventNames, queue):
         super(Parser, self).__init__()
         global mysql_db
         self.filename = filename
@@ -16,15 +17,16 @@ class Parser(Thread):
         self.password = password
         self.port = port
         self.db = db
+        self.eventNames = eventNames.split(',')
         self.queue = queue
         self.daemon = True
         mysql_db.init(host=self.host, user=self.user, password=self.password, port=int(self.port), database=self.db)
         mysql_db.connect()
 
     def run(self):
-        for event in ['SuperNationals 18',]:
+        for event in self.eventNames:
             create_tables()
-            event = Event.create(name=event)
+            event = Event.create(name=event.strip())
             with open(self.filename, 'rU') as csvfile:
                 spamreader = csv.reader(csvfile, delimiter = ',', quotechar='"')
                 self.row_count = float(sum(1 for row in spamreader))
@@ -36,7 +38,7 @@ class Parser(Thread):
                         try:
                             d = Driver()
                             d.event = event
-                            d.name = "%s %s" % (row[1], row[2])
+                            d.name = "%s %s" % (row[2], row[1])
                             d.kart = row[4]
                             eventclass = EventClass.get_or_create(event=event, class_name=row[3])
                             d.class_id = eventclass.id
@@ -45,7 +47,6 @@ class Parser(Thread):
                             pass
                     self.queue.put((line+1)*100/self.row_count)
 
-import MySQLdb
 from datetime import datetime
 
 

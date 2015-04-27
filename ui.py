@@ -17,6 +17,7 @@ class Example(Frame):
 		self.password = StringVar()
 		self.port = StringVar()
 		self.db = StringVar()
+		self.eventnames = StringVar()
 		self.filename = None
 		self.statusvar = StringVar()
 		self.tot = 0
@@ -31,7 +32,7 @@ class Example(Frame):
 		if width:
 			entry.config(width=width)
 		entry.pack(side=LEFT)
-		entry.place(x=100, y=self.y)
+		entry.place(x=250, y=self.y)
 		self.y += 40
 		return entry
 		
@@ -55,14 +56,16 @@ class Example(Frame):
 		self.makeentry(self, "Password: ", textvariable=self.password)
 		self.makeentry(self, "Port: ", textvariable=self.port)
 		self.makeentry(self, "Database: ", textvariable=self.db)
+		self.makeentry(self, "Event names (comma separated): ", textvariable=self.eventnames)
 
 		self.host.set('127.0.0.1')
 		self.user.set('root')
 		self.password.set('skusaroot')
 		self.port.set('3306')
 		self.db.set('skusa')
+		self.eventnames.set('Event 1, Event 2')
 		self.b = Button(self, text='Run', command=self.clickedRun)
-		self.b.place(x=130, y=self.y)
+		self.b.place(x=250, y=self.y)
 		l = Label(self, textvariable=self.statusvar).pack()
 		self.statusvar.set("Status: Waiting for file!")
 
@@ -74,7 +77,7 @@ class Example(Frame):
 
 
 	def clickedRun(self):
-		if not (self.filename and self.host.get() and self.user.get() and self.password.get() and self.db.get() and self.port.get()):
+		if not (self.filename and self.host.get() and self.user.get() and self.password.get() and self.db.get() and self.port.get() and self.eventnames.get()):
 			message = ""
 			if not self.filename:
 				message += "Please select a CSV file.\n"
@@ -88,15 +91,21 @@ class Example(Frame):
 				message += 'Please insert a database.\n'
 			if not self.port.get():
 				message += 'Please insert a port.\n'
+			if not self.eventnames.get():
+				message += "Please set some event names.\n"
 			tkMessageBox.showerror("Error", message)
 			return False
 		self.prog_bar['value'] = 0
 		self.queue = Queue()
 		self.b['state'] = 'disabled'
-		parser = Parser(self.filename, self.host.get(), self.user.get(), self.password.get(), self.db.get(), int(self.port.get()), self.queue)
-		parser.start()
-		self.parent.after(100, self.process_queue)
-		self.statusvar.set("Status: IMPORTING! Please wait...")
+		try:
+			parser = Parser(self.filename, self.host.get(), self.user.get(), self.password.get(), self.db.get(), int(self.port.get()), self.eventnames.get(), self.queue)
+			parser.start()
+			self.parent.after(100, self.process_queue)
+			self.statusvar.set("Status: IMPORTING! Please wait...")
+		except Exception, e:
+			tkMessageBox.showinfo("Error", "{}\r\nShow this message to the administrator.".format(e))
+			self.b['state'] = 'enabled'
 
 	def process_queue(self):
 		try:
@@ -116,7 +125,7 @@ class Example(Frame):
 def main():
   
 	root = Tk()
-	root.geometry("400x300+300+300")
+	root.geometry("600x400+300+300")
 	app = Example(root)
 	root.mainloop()  
 

@@ -11,7 +11,7 @@ APP = ['ui.py']
 DATA_FILES = []
 OPTIONS = {
 	'argv_emulation': True,
-	'packages': ['peewee'],
+	'includes': ['MySQLdb', 'peewee'],
 }
 
 setup(
