@@ -39,6 +39,8 @@ class Parser(Thread):
                             d = Driver()
                             d.event = event
                             d.name = "%s %s" % (row[2], row[1])
+                            if not d.name.strip():
+                                raise ValueError
                             d.kart = row[4]
                             eventclass = EventClass.get_or_create(event=event, class_name=row[3])
                             d.class_id = eventclass.id
